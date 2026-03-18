@@ -32,6 +32,7 @@ use App\Engine\LegacyHandler\LegacyScopeState;
 use App\Data\Service\RecordSnoozeServiceInterface;
 use BeanFactory;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Class ListViewHandler
@@ -102,15 +103,19 @@ class RecordSnoozeHandler extends LegacyHandler implements RecordSnoozeServiceIn
         $bean = BeanFactory::newBean($moduleName);
         $bean->retrieve($id);
 
-        if ($bean && $bean->id) {
-            $snooze = $bean->snoozeUntil();
-            $bean->snooze = $snooze;
-            $bean->is_read = 0;
-            $bean->save();
-
-            return true;
+        if (!$bean || !$bean->id) {
+            return false;
         }
 
-        return false;
+        if (!$bean->ACLAccess('edit')) {
+            throw new AccessDeniedHttpException('User does not have edit access');
+        }
+
+        $snooze = $bean->snoozeUntil();
+        $bean->snooze = $snooze;
+        $bean->is_read = 0;
+        $bean->save();
+
+        return true;
     }
 }

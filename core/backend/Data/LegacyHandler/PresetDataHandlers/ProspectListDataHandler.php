@@ -38,6 +38,7 @@ use App\Module\Service\ModuleNameMapperInterface;
 use BeanFactory;
 use SubpanelDataPort;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ProspectListDataHandler extends LegacyHandler implements PresetListDataHandlerInterface
 {
@@ -117,6 +118,10 @@ class ProspectListDataHandler extends LegacyHandler implements PresetListDataHan
         $this->initController($parentModule, $parentId);
 
         $parentBean = BeanFactory::getBean($parentModule, $parentId);
+
+        if ($parentBean && !$parentBean->ACLAccess('view')) {
+            throw new AccessDeniedHttpException('User does not have view access to parent record');
+        }
 
         require_once 'include/portability/Subpanels/SubpanelDataPort.php';
 

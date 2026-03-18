@@ -33,6 +33,7 @@ use App\Engine\LegacyHandler\LegacyScopeState;
 use App\Module\Service\ModuleNameMapperInterface;
 use BeanFactory;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class RecordMarkAsReadHandler extends LegacyHandler implements RecordMarkAsReadServiceInterface
 {
@@ -109,13 +110,17 @@ class RecordMarkAsReadHandler extends LegacyHandler implements RecordMarkAsReadS
         $bean = BeanFactory::newBean($moduleName);
         $bean->retrieve($id);
 
-        if ($bean && $bean->id) {
-            $bean->is_read = 1;
-            $bean->save();
-
-            return true;
+        if (!$bean || !$bean->id) {
+            return false;
         }
 
-        return false;
+        if (!$bean->ACLAccess('edit')) {
+            throw new AccessDeniedHttpException('User does not have edit access');
+        }
+
+        $bean->is_read = 1;
+        $bean->save();
+
+        return true;
     }
 }

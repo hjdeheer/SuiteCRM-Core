@@ -131,6 +131,11 @@ class RecordHandler extends LegacyHandler implements RecordProviderInterface
 
         $bean = $this->retrieveBean($module, $id);
 
+        if (!empty($id) && !$bean->ACLAccess('view')) {
+            $this->close();
+            throw new AccessDeniedHttpException('User does not have view access');
+        }
+
         $record = $this->buildRecord($id, $module, $bean, 'retrieve');
         $this->close();
 

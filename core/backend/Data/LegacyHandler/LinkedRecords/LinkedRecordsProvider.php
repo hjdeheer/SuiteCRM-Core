@@ -36,6 +36,7 @@ use App\Engine\LegacyHandler\LegacyScopeState;
 use App\FieldDefinitions\Service\FieldDefinitionsProviderInterface;
 use App\Module\Service\ModuleNameMapperInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class LinkedRecordsProvider extends LegacyHandler implements LinkedRecordsProviderInterface
 {
@@ -191,6 +192,11 @@ class LinkedRecordsProvider extends LegacyHandler implements LinkedRecordsProvid
         $parentModule = $this->moduleNameMapper->toLegacy($parent->getModule());
         $bean = \BeanFactory::getBean($parentModule, $parent->getId());
 
+        if ($bean && !$bean->ACLAccess('view')) {
+            $this->close();
+            throw new AccessDeniedHttpException('User does not have view access to parent record');
+        }
+
         if (!$bean->load_relationship($linkField)) {
             return;
         }
@@ -205,6 +211,11 @@ class LinkedRecordsProvider extends LegacyHandler implements LinkedRecordsProvid
         $this->init();
         $parentModule = $this->moduleNameMapper->toLegacy($parent->getModule());
         $bean = \BeanFactory::getBean($parentModule, $parent->getId());
+
+        if ($bean && !$bean->ACLAccess('view')) {
+            $this->close();
+            throw new AccessDeniedHttpException('User does not have view access to parent record');
+        }
 
         if (!$bean->load_relationship($linkField)) {
             return;
@@ -237,6 +248,11 @@ class LinkedRecordsProvider extends LegacyHandler implements LinkedRecordsProvid
     protected function getItemBeans(Record $record, array $definition): array
     {
         $bean = \BeanFactory::getBean($this->moduleNameMapper->toLegacy($record->getModule()), $record->getId());
+
+        if ($bean && !$bean->ACLAccess('view')) {
+            throw new AccessDeniedHttpException('User does not have view access to parent record');
+        }
+
         $relationship = $definition['link'] ?? $definition['relationship'] ?? false;
         $linkName = $definition['link'] ?? $definition['name'] ?? false;
 

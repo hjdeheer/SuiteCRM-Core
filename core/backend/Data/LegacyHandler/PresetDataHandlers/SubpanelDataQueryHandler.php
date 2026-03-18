@@ -34,6 +34,7 @@ use App\Module\Service\ModuleNameMapperInterface;
 use BeanFactory;
 use SubpanelCustomQueryPort;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class SubpanelDataQueryHandler extends LegacyHandler
 {
@@ -102,6 +103,10 @@ class SubpanelDataQueryHandler extends LegacyHandler
         $this->initController($parentModule, $parentId);
 
         $parentBean = BeanFactory::getBean($parentModule, $parentId);
+
+        if ($parentBean && !$parentBean->ACLAccess('view')) {
+            throw new AccessDeniedHttpException('User does not have view access to parent record');
+        }
 
         return $this->queryHandler->getQueries($parentBean, $subpanel);
     }

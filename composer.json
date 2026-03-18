@@ -66,6 +66,7 @@
     "nbgrp/onelogin-saml-bundle": "*",
     "nelmio/cors-bundle": "^2.1",
     "nesbot/carbon": "2.72.6",
+    "nikic/php-parser": "5.7",
     "onelogin/php-saml": "^4",
     "paragonie/random_compat": "^2.0",
     "phpdocumentor/reflection-docblock": "^5.2",

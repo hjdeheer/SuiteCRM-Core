@@ -36,10 +36,10 @@ use App\Module\Users\Repository\UserRepository;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use Scheb\TwoFactorBundle\Model\BackupCodeInterface;
 use Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration;
 use Scheb\TwoFactorBundle\Model\Totp\TotpConfigurationInterface;
 use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface;
-use Scheb\TwoFactorBundle\Model\BackupCodeInterface;
 use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -94,6 +94,8 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
     private ?string $user_name;
 
     #[ApiProperty(
+        readable: false,
+        writable: false,
         openapiContext: [
             'type' => 'string',
             'description' => 'The user hash'
@@ -108,6 +110,8 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
     private ?string $userHash;
 
     #[ApiProperty(
+        readable: false,
+        writable: false,
         openapiContext: [
             'type' => 'string',
             'description' => 'The system generated password hash'
@@ -650,6 +654,8 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
     private ?string $factorAuthInterface;
 
     #[ApiProperty(
+        readable: false,
+        writable: false,
         openapiContext: [
             'type' => 'string',
             'description' => 'totp secret',
@@ -679,6 +685,10 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
     {
         $roles[] = 'ROLE_USER';
 
+        if ($this->getIsAdmin()) {
+            $roles[] = 'ROLE_ADMIN';
+        }
+
         return array_unique($roles);
     }
 
@@ -698,6 +708,10 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
         $this->id = $id;
     }
 
+    #[ApiProperty(
+        readable: false,
+        writable: false
+    )]
     public function getSystemGeneratedPassword(): ?bool
     {
         return $this->systemGeneratedPassword ?? null;
@@ -770,6 +784,9 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
         return $this;
     }
 
+    #[ApiProperty(
+        writable: false
+    )]
     public function getIsAdmin(): ?bool
     {
         return $this->isAdmin ?? null;
@@ -1154,6 +1171,10 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
         return $this;
     }
 
+    #[ApiProperty(
+        readable: false,
+        writable: false
+    )]
     public function getBackupCodes(): array
     {
         return $this->backupCodes ?? [];
@@ -1168,6 +1189,10 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
     /**
      * @inheritDoc
      */
+    #[ApiProperty(
+        readable: false,
+        writable: false
+    )]
     public function getSalt(): ?string
     {
         return null;
@@ -1201,14 +1226,23 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
         return true;
     }
 
+
     /**
      * @inheritDoc
      */
+    #[ApiProperty(
+        readable: false,
+        writable: false
+    )]
     public function getPassword(): ?string
     {
         return $this->getUserHash();
     }
 
+    #[ApiProperty(
+        readable: false,
+        writable: false
+    )]
     public function getUserHash(): ?string
     {
         return $this->userHash ?? null;
@@ -1253,11 +1287,19 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
         return $this->getUserName();
     }
 
+    #[ApiProperty(
+        readable: false,
+        writable: false
+    )]
     public function getTotpAuthenticationConfiguration(): ?TotpConfigurationInterface
     {
         return new TotpConfiguration($this->getTotpSecret(), TotpConfiguration::ALGORITHM_SHA1, 30, 6);
     }
 
+    #[ApiProperty(
+        readable: false,
+        writable: false
+    )]
     public function getTotpSecret(): ?string
     {
         return $this->totpSecret ?? '';
@@ -1290,7 +1332,7 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
         $correctCode = false;
         $backupCodes = $this->getBackupCodes();
 
-        if (in_array($code, $backupCodes, true)){
+        if (in_array($code, $backupCodes, true)) {
             $correctCode = true;
             $this->invalidateBackupCode($code);
         }
@@ -1305,7 +1347,7 @@ class User implements UserInterface, EquatableInterface, PasswordAuthenticatedUs
     {
         $backupCodes = $this->getBackupCodes();
         $key = array_search($code, $backupCodes, true);
-        if ($key !== false){
+        if ($key !== false) {
             unset($backupCodes[$key]);
         }
 

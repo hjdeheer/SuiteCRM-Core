@@ -30,6 +30,7 @@ namespace App\Filters\Service;
 
 use DBManagerFactory;
 use Symfony\Component\Security\Core\Security;
+use Throwable;
 use function is_array;
 
 /**
@@ -77,7 +78,17 @@ class FilterDefinitionProvider implements FilterDefinitionProviderInterface
 
         $this->listViewFilters = [];
         while ($row = $db->fetchByAssoc($result, -1, false)) {
-            $contents = unserialize(base64_decode($row['contents']));
+
+            if (empty($row['contents'])) {
+                continue;
+            }
+
+            $contents = $this->getContents($row['contents']);
+
+            if ($contents === null) {
+                continue;
+            }
+
             unset(
                 $contents['searchFormTab'],
                 $contents['query'],
@@ -110,5 +121,38 @@ class FilterDefinitionProvider implements FilterDefinitionProviderInterface
         }
 
         return $this->listViewFilters;
+    }
+
+    /**
+     * @param $encodedContents
+     * @return array|null
+     */
+    protected function getContents($encodedContents): ?array
+    {
+        try {
+             $contents = json_decode($encodedContents, true, 512, JSON_THROW_ON_ERROR);
+        } catch (Throwable $e) {
+            $contents = null;
+        }
+
+        if (is_array($contents)) {
+            return $contents;
+        }
+
+        if ($contents !== null) {
+            return null;
+        }
+
+        try {
+            $contents = unserialize(base64_decode($encodedContents), ['allowed_classes' => false]);
+        } catch (Throwable $e) {
+            return null;
+        }
+
+        if (is_array($contents)) {
+            return $contents;
+        }
+
+        return null;
     }
 }

@@ -43,6 +43,7 @@ use Psr\Log\LoggerInterface;
 use SubpanelDataPort;
 use SugarBean;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use User;
 
 class HistoryTimelineDataHandler extends SubpanelDataQueryHandler implements PresetListDataHandlerInterface, LoggerAwareInterface
@@ -145,6 +146,10 @@ class HistoryTimelineDataHandler extends SubpanelDataQueryHandler implements Pre
         $this->initController($parentModule, $parentId);
 
         $parentBean = BeanFactory::getBean($parentModule, $parentId);
+
+        if ($parentBean && !$parentBean->ACLAccess('view')) {
+            throw new AccessDeniedHttpException('User does not have view access to parent record');
+        }
 
         $unionQueryColumns =
             [
