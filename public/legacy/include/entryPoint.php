@@ -232,4 +232,7 @@ if (empty($GLOBALS['installing']) && !empty($sugar_config['dbconfig']['db_name']
 ///////////////////////////////////////////////////////////////////////////////
 
 //It does a check to see if the host is valid
-check_trusted_hosts();
+$sapi_type = php_sapi_name();
+if ($sapi_type !== 'cli') {
+    check_trusted_hosts();
+}
