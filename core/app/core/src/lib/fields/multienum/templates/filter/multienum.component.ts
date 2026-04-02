@@ -62,6 +62,13 @@ export class MultiEnumFilterFieldComponent extends BaseMultiEnumComponent implem
         super(languages, typeFormatter, logic, logicDisplay);
     }
 
+    protected initValue(): void {
+        super.initValue();
+        this.selectedValues = (this.selectedValues ?? []).map(v =>
+            typeof v === 'string' ? v : v.value
+        ) as any;
+    }
+
     ngOnInit(): void {
         this.field.valueList = [];
 
@@ -82,9 +89,14 @@ export class MultiEnumFilterFieldComponent extends BaseMultiEnumComponent implem
         this.primengConfig.ripple = true;
     }
 
-    public onAdd(): void {
+    protected getSelectedValuesList(): string[] {
+        return (this.selectedValues ?? []).map(item =>
+            typeof item === 'string' ? item : item.value
+        );
+    }
 
-        const value = this.selectedValues.map(option => option.value);
+    public onAdd(): void {
+        const value = this.getSelectedValuesList();
         this.field.valueList = value;
         this.field.formControl.setValue(value);
         this.field.formControl.markAsDirty();
@@ -95,8 +107,7 @@ export class MultiEnumFilterFieldComponent extends BaseMultiEnumComponent implem
     }
 
     public onRemove(): void {
-
-        let value = this.selectedValues.map(option => option.value);
+        let value = this.getSelectedValuesList();
         if (!value) {
             value = [];
         }
@@ -134,11 +145,10 @@ export class MultiEnumFilterFieldComponent extends BaseMultiEnumComponent implem
     public onSelectAll(event): void {
         this.selectAll = event.checked;
         if (this.selectAll) {
-
             if (this.multiSelect.visibleOptions() && this.multiSelect.visibleOptions().length) {
-                this.selectedValues = this.multiSelect.visibleOptions();
+                this.selectedValues = this.multiSelect.visibleOptions().map(option => option.value) as any;
             } else {
-                this.selectedValues = this.options;
+                this.selectedValues = this.options.map(option => option.value) as any;
             }
             this.onAdd();
         } else {
@@ -159,7 +169,7 @@ export class MultiEnumFilterFieldComponent extends BaseMultiEnumComponent implem
 
     protected calculateSelectAll(): void {
         const visibleOptions = this?.multiSelect?.visibleOptions() ?? [];
-        const selectedValuesKeys = (this?.selectedValues ?? []).map(item => item.value);
+        const selectedValuesKeys = this.getSelectedValuesList();
 
         if (!visibleOptions.length || !selectedValuesKeys.length) {
             this.selectAll = false;
