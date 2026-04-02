@@ -64,6 +64,14 @@ export class MultiEnumEditFieldComponent extends BaseMultiEnumComponent {
         super(languages, typeFormatter, logic, logicDisplay);
     }
 
+    protected initValue(): void {
+        super.initValue();
+        // Convert Option objects to value strings for PrimeNG [optionValue]="'value'" binding
+        this.selectedValues = (this.selectedValues ?? []).map(v =>
+            typeof v === 'string' ? v : v.value
+        ) as any;
+    }
+
     ngOnInit(): void {
         this.checkAndInitAsDynamicEnum();
         this.getTranslatedLabels();
@@ -86,7 +94,7 @@ export class MultiEnumEditFieldComponent extends BaseMultiEnumComponent {
     }
 
     public onAdd(): void {
-        const value = this.selectedValues.map(option => option.value);
+        const value = this.getSelectedValuesList();
         this.field.valueList = value;
         this.field.formControl.setValue(value);
         this.field.formControl.markAsDirty();
@@ -98,9 +106,9 @@ export class MultiEnumEditFieldComponent extends BaseMultiEnumComponent {
         this.selectAll = event.checked;
         if (this.selectAll) {
             if (this.multiSelect.visibleOptions() && this.multiSelect.visibleOptions().length) {
-                this.selectedValues = this.multiSelect.visibleOptions();
+                this.selectedValues = this.multiSelect.visibleOptions().map(option => option.value) as any;
             } else {
-                this.selectedValues = this.options;
+                this.selectedValues = this.options.map(option => option.value) as any;
             }
             this.onAdd();
         } else {
@@ -110,8 +118,7 @@ export class MultiEnumEditFieldComponent extends BaseMultiEnumComponent {
     }
 
     public onRemove(): void {
-
-        const value = this.selectedValues.map(option => option.value);
+        const value = this.getSelectedValuesList();
         this.field.valueList = value;
         this.field.formControl.setValue(value);
         this.field.formControl.markAsDirty();
@@ -141,9 +148,15 @@ export class MultiEnumEditFieldComponent extends BaseMultiEnumComponent {
         this.emptyFilterLabel = this.languages.getAppString('ERR_SEARCH_NO_RESULTS') || '';
     }
 
+    protected getSelectedValuesList(): string[] {
+        return (this.selectedValues ?? []).map(item =>
+            typeof item === 'string' ? item : item.value
+        );
+    }
+
     protected calculateSelectAll(): void {
         const visibleOptions = this?.multiSelect?.visibleOptions() ?? [];
-        const selectedValuesKeys = (this?.selectedValues ?? []).map(item => item.value);
+        const selectedValuesKeys = this.getSelectedValuesList();
 
         if (!visibleOptions.length || !selectedValuesKeys.length) {
             this.selectAll = false;

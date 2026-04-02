@@ -384,3 +384,13 @@ class Bug extends SugarBean
         return parent::save($check_notify);
     }
 }
+
+function getReleaseDropDown()
+{
+    static $releases = null;
+    if (!$releases) {
+        $seedRelease = BeanFactory::newBean('Releases');
+        $releases = $seedRelease->get_releases(true, "Active");
+    }
+    return $releases;
+}

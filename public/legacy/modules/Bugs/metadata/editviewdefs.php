@@ -83,8 +83,8 @@ $viewdefs['Bugs']['EditView'] = array(
 
 
             array(
-              'release_name',
-              'fixed_in_release_name'
+              'found_in_release',
+              'fixed_in_release'
             ),
 
             array(
